@@ -39,10 +39,6 @@ services:
         value: "true"
       - key: DATA_QUALITY_ENABLED
         value: "true"
-    disk:
-      name: pratibha-summaries
-      mountPath: /app/summaries
-      sizeGB: 1
 
   # ── Node.js Backend + Static Files ───────────────────────────────────────
   - type: web
