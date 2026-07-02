@@ -1,0 +1,6 @@
+// Regressions dataset — starts empty, grows.
+// Each Monday, review pratibha_agent_traces where auto_flags != []
+// and promote notable failures to this file. Same schema as seed.jsonl.
+//
+// This file is APPEND-ONLY. Never delete or edit existing rows — the whole
+// point is that every real production failure becomes a permanent test case.

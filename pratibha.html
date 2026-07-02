@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pratibha — Daily Lead Review</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────── */
+    #top-bar {
+      padding: 16px 20px 12px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    #top-bar h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: 0.3px;
+    }
+
+    #date-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    /* ── Upload card ─────────────────────────────────────────── */
+    #upload-section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px 28px;
+      width: calc(100% - 32px);
+      max-width: 520px;
+      margin: 0 auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+
+    #upload-section h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .file-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .file-row label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .file-row input[type="file"] {
+      border: 1.5px dashed #ccc;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      color: #444;
+      cursor: pointer;
+      background: #fafafa;
+      transition: border-color 0.2s;
+    }
+    .file-row input[type="file"]:hover { border-color: #4f8ef7; }
+
+    #upload-btn {
+      margin-top: 6px;
+      width: 100%;
+      padding: 11px;
+      background: #4f8ef7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #upload-btn:hover { background: #3a78e8; }
+    #upload-btn:disabled { background: #a0b8f0; cursor: not-allowed; }
+
+    #upload-status {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #666;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ── Messages area ───────────────────────────────────────── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 16px 8px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 11px 16px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.agent {
+      background: #fff;
+      color: #1a1a2e;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .message.pratibha {
+      background: #4f8ef7;
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.system {
+      background: #e8f5e9;
+      color: #2e7d32;
+      align-self: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 8px 18px;
+      max-width: 90%;
+    }
+
+    /* ── Input bar — always at bottom ────────────────────────── */
+    #input-bar {
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* stretch input-bar to full width visually */
+    #input-bar-wrap {
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      width: 100%;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    #user-input:focus { border-color: #4f8ef7; }
+    #user-input:disabled {
+      background: #f5f5f5;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    #send-btn {
+      padding: 12px 22px;
+      background: #4f8ef7;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    #send-btn:hover:not(:disabled) { background: #3a78e8; }
+    #send-btn:disabled { background: #a0b8f0; cursor: not-allowed; }
+
+    /* ── Typing indicator ───────────────────────────────────── */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 11px 16px;
+      background: #fff;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      align-self: flex-start;
+      width: fit-content;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px;
+      background: #bbb;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%           { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div id="top-bar">
+    <h1>Pratibha — Daily Lead Review</h1>
+    <div id="date-label"></div>
+  </div>
+
+  <!-- Upload section -->
+  <div id="upload-section">
+    <h2>Upload today's Cratio exports</h2>
+    <div class="file-row">
+      <label>Activities Report</label>
+      <input type="file" id="activities-file" accept=".csv" />
+    </div>
+    <div class="file-row">
+      <label>Sourcewise Report</label>
+      <input type="file" id="sourcewise-file" accept=".csv" />
+    </div>
+    <div class="file-row">
+      <label>Active Leads</label>
+      <input type="file" id="active-file" accept=".csv" />
+    </div>
+    <button id="upload-btn" onclick="uploadAndBegin()">Upload &amp; Begin</button>
+    <div id="upload-status"></div>
+  </div>
+
+  <!-- Messages (empty until session starts) -->
+  <div id="messages"></div>
+
+  <!-- Input bar — always visible -->
+  <div id="input-bar-wrap">
+    <div id="input-bar">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Upload your files above to begin…"
+        disabled
+        onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }"
+      />
+      <button id="send-btn" onclick="sendMessage()" disabled>Send</button>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let threadId   = null;
+    let exportDate = null;
+    let isSending  = false;
+
+    async function uploadAndBegin() {
+      const btn      = document.getElementById('upload-btn');
+      const status   = document.getElementById('upload-status');
+      const activities = document.getElementById('activities-file').files[0];
+      const sourcewise = document.getElementById('sourcewise-file').files[0];
+      const active     = document.getElementById('active-file').files[0];
+
+      if (!activities || !sourcewise || !active) {
+        status.textContent = 'Please select all 3 files.';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Uploading and parsing…';
+
+      try {
+        const form = new FormData();
+        form.append('activities_file', activities);
+        form.append('sourcewise_file', sourcewise);
+        form.append('active_file', active);
+
+        const res  = await fetch(`${API}/api/pratibha/upload-export`, { method: 'POST', body: form });
+        const data = await res.json();
+
+        if (!res.ok) {
+          status.textContent = 'Error: ' + (data.error || 'Upload failed');
+          btn.disabled = false;
+          return;
+        }
+
+        exportDate = data.date;
+        threadId   = `pratibha-${exportDate}`;
+
+        // Hide upload, show date, enable input
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('date-label').textContent = `Reviewing: ${exportDate}`;
+        document.getElementById('date-label').style.display = 'block';
+
+        const input = document.getElementById('user-input');
+        input.disabled = false;
+        input.placeholder = 'Type your answer and press Enter…';
+        document.getElementById('send-btn').disabled = false;
+        input.focus();
+
+        // Auto-start conversation
+        await sendMessage('start');
+      } catch (e) {
+        status.textContent = 'Network error: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    async function sendMessage(text = null) {
+      if (isSending) return;
+      const input   = document.getElementById('user-input');
+      const message = text || input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      isSending   = true;
+      document.getElementById('send-btn').disabled = true;
+
+      if (text !== 'start') appendMessage('pratibha', message);
+
+      const typingEl = showTyping();
+
+      try {
+        const res  = await fetch(`${API}/api/pratibha/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, thread_id: threadId, date: exportDate }),
+        });
+        const data = await res.json();
+        removeTyping(typingEl);
+
+        if (!res.ok) {
+          appendMessage('system', 'Error: ' + (data.error || 'Request failed'));
+          return;
+        }
+
+        appendMessage('agent', data.reply);
+
+        if (data.done) {
+          appendMessage('system', 'Session complete. Summary will be saved at 6:00 PM IST.');
+          input.disabled = true;
+          document.getElementById('send-btn').disabled = true;
+          return;
+        }
+      } catch (e) {
+        removeTyping(typingEl);
+        appendMessage('system', 'Network error: ' + e.message);
+      } finally {
+        isSending = false;
+        if (!document.getElementById('user-input').disabled) {
+          document.getElementById('send-btn').disabled = false;
+        }
+        input.focus();
+      }
+    }
+
+    function appendMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.textContent = content;
+      const container = document.getElementById('messages');
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+      const el = document.createElement('div');
+      el.className = 'typing-indicator';
+      el.innerHTML = '<span></span><span></span><span></span>';
+      const container = document.getElementById('messages');
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+      return el;
+    }
+
+    function removeTyping(el) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+  </script>
+</body>
+</html>

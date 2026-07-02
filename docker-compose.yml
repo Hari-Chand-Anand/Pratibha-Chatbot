@@ -1,0 +1,46 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: pratibha_postgres
+    environment:
+      POSTGRES_DB:       hca_agent
+      POSTGRES_USER:     hca
+      POSTGRES_PASSWORD: hca_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"   # 5433 on host to avoid conflict with main-portfolio's postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hca -d hca_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  pratibha-agent:
+    build: ./pratibha-agent
+    container_name: pratibha_agent
+    environment:
+      DATABASE_URL: postgresql://hca:hca_secret@postgres:5432/hca_agent
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SUMMARY_LLM: ${SUMMARY_LLM:-claude}
+      CLAUDE_SUMMARY_MODEL: ${CLAUDE_SUMMARY_MODEL:-claude-sonnet-5}
+      TRACES_ENABLED: ${TRACES_ENABLED:-true}
+      CLAUDE_QUEUE_ENABLED: ${CLAUDE_QUEUE_ENABLED:-false}
+      MONITOR_ENABLED: ${MONITOR_ENABLED:-true}
+      DAY_ZERO_DATE: ${DAY_ZERO_DATE:-}
+      EVAL_AUTO_PROMOTE_ENABLED: ${EVAL_AUTO_PROMOTE_ENABLED:-true}
+    volumes:
+      - C:/Users/ADMIN/Desktop/Pratibha Chatbot/summaries:/app/summaries
+      - C:/Users/ADMIN/Desktop/Pratibha Chatbot/uploads:/app/uploads
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

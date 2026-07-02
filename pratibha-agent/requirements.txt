@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+langgraph
+langgraph-checkpoint-postgres
+langchain-core
+langchain-groq
+groq
+anthropic
+psycopg2-binary
+psycopg[binary]
+pandas
+apscheduler
+python-multipart
+httpx

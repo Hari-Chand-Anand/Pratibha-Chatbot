@@ -1,0 +1,67 @@
+services:
+
+  # ── Python FastAPI Agent (LangGraph + Groq) ───────────────────────────────
+  - type: web
+    name: pratibha-agent
+    runtime: docker
+    dockerfilePath: pratibha-agent/Dockerfile
+    dockerContext: pratibha-agent
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pratibha-db
+          property: connectionString
+      - key: GROQ_API_KEY
+        sync: false          # set manually in Render dashboard
+      # Migration #004 — Claude summary + eval harness + monitor
+      # ANTHROPIC_API_KEY is optional. Leave unset until you have one — the code
+      # automatically falls back to Groq/Qwen. When you paste a key in Render's
+      # dashboard, ALSO flip SUMMARY_LLM to 'claude'.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SUMMARY_LLM
+        value: groq          # switch to 'claude' once ANTHROPIC_API_KEY is set
+      - key: CLAUDE_SUMMARY_MODEL
+        value: claude-sonnet-5
+      - key: CLAUDE_QUEUE_MODEL
+        value: claude-sonnet-5
+      - key: EVAL_JUDGE_MODEL
+        value: claude-sonnet-5
+      - key: TRACES_ENABLED
+        value: "true"
+      - key: CLAUDE_QUEUE_ENABLED
+        value: "false"       # flip to true after eval-verified in staging
+      - key: MONITOR_ENABLED
+        value: "true"
+      - key: MEMORY_FIX_ENABLED
+        value: "true"
+      - key: DATA_QUALITY_ENABLED
+        value: "true"
+    disk:
+      name: pratibha-summaries
+      mountPath: /app/summaries
+      sizeGB: 1
+
+  # ── Node.js Backend + Static Files ───────────────────────────────────────
+  - type: web
+    name: pratibha-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: PRATIBHA_AGENT_URL
+        sync: false          # set to https://pratibha-agent.onrender.com after first deploy
+      - key: NODE_VERSION
+        value: 20
+      - key: ADMIN_PASSWORD
+        sync: false          # password for /admin.html (set to whatever you want)
+
+databases:
+  - name: pratibha-db
+    databaseName: hca_agent
+    user: hca
+    plan: free

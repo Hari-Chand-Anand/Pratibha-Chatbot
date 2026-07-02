@@ -1,0 +1,9 @@
+.env
+backend/.env
+node_modules/
+uploads/
+summaries/
+__pycache__/
+*.pyc
+backend/server.log
+backend/server.err
