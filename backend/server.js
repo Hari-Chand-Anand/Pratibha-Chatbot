@@ -89,8 +89,20 @@ app.post("/api/pratibha/chat", async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req.body),
     });
-    const data = await response.json();
-    res.json(data);
+
+    // Don't assume the body is JSON — a rate limit (429) or gateway error can
+    // come back as plain text and crash JSON.parse if we don't check first.
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      const friendly = raw.toLowerCase().includes("too many requests")
+        ? "The AI service is rate-limited right now — wait a few seconds and try again."
+        : `Upstream error: ${raw.slice(0, 200)}`;
+      return res.status(502).json({ error: friendly });
+    }
+    res.status(response.status).json(data);
   } catch (e) {
     console.error("chat proxy error:", e);
     res.status(500).json({ error: e.message });
