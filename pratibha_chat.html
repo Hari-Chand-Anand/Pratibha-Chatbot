@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pratibha — Daily Check-in</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #top-bar {
+      padding: 16px 20px 12px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    #top-bar h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: 0.3px;
+    }
+
+    #date-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 16px 8px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 11px 16px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.agent {
+      background: #fff;
+      color: #1a1a2e;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .message.pratibha {
+      background: #4f8ef7;
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.system {
+      background: #e8f5e9;
+      color: #2e7d32;
+      align-self: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 8px 18px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .message.empty {
+      background: #fff7ed;
+      color: #9a5b1e;
+      align-self: center;
+      font-size: 0.85rem;
+      border-radius: 12px;
+      padding: 16px 20px;
+      max-width: 90%;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #retry-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #4f8ef7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #input-bar-wrap {
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      width: 100%;
+    }
+
+    #input-bar {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    #user-input:focus { border-color: #4f8ef7; }
+    #user-input:disabled {
+      background: #f5f5f5;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    #send-btn {
+      padding: 12px 22px;
+      background: #4f8ef7;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    #send-btn:hover:not(:disabled) { background: #3a78e8; }
+    #send-btn:disabled { background: #a0b8f0; cursor: not-allowed; }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 11px 16px;
+      background: #fff;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      align-self: flex-start;
+      width: fit-content;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px;
+      background: #bbb;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%           { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="top-bar">
+    <h1>Pratibha — Daily Check-in</h1>
+    <div id="date-label"></div>
+  </div>
+
+  <div id="messages"></div>
+
+  <div id="input-bar-wrap">
+    <div id="input-bar">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Loading today's leads…"
+        disabled
+        onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }"
+      />
+      <button id="send-btn" onclick="sendMessage()" disabled>Send</button>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let exportDate = todayISO();
+    let threadId   = `pratibha-${exportDate}`;
+    let isSending  = false;
+    let firstReply = true;
+
+    function todayISO() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function setInputEnabled(enabled) {
+      const input = document.getElementById('user-input');
+      const btn = document.getElementById('send-btn');
+      input.disabled = !enabled;
+      btn.disabled = !enabled;
+      input.placeholder = enabled ? 'Type your answer and press Enter…' : 'Loading…';
+      if (enabled) input.focus();
+    }
+
+    function showEmptyState() {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = 'message empty';
+      div.innerHTML =
+        `No leads to review yet for today (${exportDate}).<br>` +
+        `The admin hasn't uploaded today's data yet — check back shortly.<br>` +
+        `<button id="retry-btn" onclick="location.reload()">Check again</button>`;
+      container.appendChild(div);
+    }
+
+    async function startSession() {
+      document.getElementById('date-label').textContent = `Reviewing: ${exportDate}`;
+      const typingEl = showTyping();
+      try {
+        const res = await fetch(`${API}/api/pratibha/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'start', thread_id: threadId, date: exportDate }),
+        });
+        const data = await res.json();
+        removeTyping(typingEl);
+
+        if (!res.ok) {
+          appendMessage('system', 'Error: ' + (data.error || 'Could not start session.'));
+          return;
+        }
+
+        // If the very first response immediately ends the session, treat it
+        // as "nothing uploaded yet today" rather than a real completed day.
+        if (data.done && firstReply) {
+          showEmptyState();
+          return;
+        }
+
+        appendMessage('agent', data.reply);
+        firstReply = false;
+
+        if (data.done) {
+          appendMessage('system', 'Session complete. Thanks Pratibha!');
+          return;
+        }
+        setInputEnabled(true);
+      } catch (e) {
+        removeTyping(typingEl);
+        appendMessage('system', 'Network error: ' + e.message);
+      }
+    }
+
+    async function sendMessage() {
+      if (isSending) return;
+      const input   = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      isSending   = true;
+      setInputEnabled(false);
+      appendMessage('pratibha', message);
+      firstReply = false;
+
+      const typingEl = showTyping();
+
+      try {
+        const res  = await fetch(`${API}/api/pratibha/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, thread_id: threadId, date: exportDate }),
+        });
+        const data = await res.json();
+        removeTyping(typingEl);
+
+        if (!res.ok) {
+          appendMessage('system', 'Error: ' + (data.error || 'Request failed'));
+          setInputEnabled(true);
+          return;
+        }
+
+        appendMessage('agent', data.reply);
+
+        if (data.done) {
+          appendMessage('system', 'Session complete. Thanks Pratibha!');
+          setInputEnabled(false);
+          return;
+        }
+        setInputEnabled(true);
+      } catch (e) {
+        removeTyping(typingEl);
+        appendMessage('system', 'Network error: ' + e.message);
+        setInputEnabled(true);
+      } finally {
+        isSending = false;
+      }
+    }
+
+    function appendMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.textContent = content;
+      const container = document.getElementById('messages');
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+      const el = document.createElement('div');
+      el.className = 'typing-indicator';
+      el.innerHTML = '<span></span><span></span><span></span>';
+      const container = document.getElementById('messages');
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+      return el;
+    }
+
+    function removeTyping(el) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
+
+    // Kick off automatically — no upload step on this page.
+    startSession();
+  </script>
+</body>
+</html>
