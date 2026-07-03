@@ -63,9 +63,12 @@ class ChatRequest(BaseModel):
 
 
 class ParseRequest(BaseModel):
-    activities_path: str
-    sourcewise_path: str
-    active_path: str
+    activities_filename: str
+    activities_content: str
+    sourcewise_filename: str
+    sourcewise_content: str
+    active_filename: str
+    active_content: str
 
 
 class SummaryRequest(BaseModel):
@@ -80,9 +83,26 @@ def health():
 @app.post("/parse-exports")
 def parse_exports(req: ParseRequest):
     try:
-        export_date = extract_date_from_filename(os.path.basename(req.activities_path))
+        export_date = extract_date_from_filename(req.activities_filename)
+
+        # Write the received content to this service's own local disk. The
+        # caller (pratibha-backend) may be a completely separate machine, so
+        # only file CONTENTS can be trusted — a path from the caller's disk
+        # means nothing here.
+        date_dir = os.path.join("/app/uploads", export_date.isoformat())
+        os.makedirs(date_dir, exist_ok=True)
+        activities_path = os.path.join(date_dir, req.activities_filename)
+        sourcewise_path = os.path.join(date_dir, req.sourcewise_filename)
+        active_path = os.path.join(date_dir, req.active_filename)
+        with open(activities_path, "w", encoding="utf-8") as f:
+            f.write(req.activities_content)
+        with open(sourcewise_path, "w", encoding="utf-8") as f:
+            f.write(req.sourcewise_content)
+        with open(active_path, "w", encoding="utf-8") as f:
+            f.write(req.active_content)
+
         count = parse_and_load_exports(
-            req.activities_path, req.sourcewise_path, req.active_path, export_date,
+            activities_path, sourcewise_path, active_path, export_date,
         )
         conn = get_db_conn()
         queue = build_question_queue(export_date, conn)

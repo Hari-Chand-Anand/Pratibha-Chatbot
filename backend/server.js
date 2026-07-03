@@ -16,12 +16,6 @@ const PRATIBHA_AGENT_URL = process.env.PRATIBHA_AGENT_URL || "http://localhost:8
 const UPLOADS_DIR = join(__dirname, "..", "uploads");
 const SUMMARIES_DIR = join(__dirname, "..", "summaries");
 
-// Translate host Windows path → container path for the Python agent
-function toContainerPath(hostPath) {
-  const rel = hostPath.replace(UPLOADS_DIR, "").replace(/\\/g, "/");
-  return `/app/uploads${rel}`;
-}
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, "..")));
@@ -55,13 +49,21 @@ app.post(
         return res.status(400).json({ error: "All 3 files required" });
       }
 
+      // Send file CONTENTS, not paths — pratibha-backend and pratibha-agent are
+      // separate services (on Render) with no shared disk, so a path that's
+      // valid on this machine means nothing on the agent's machine. Reading
+      // and forwarding the raw text works whether they're on the same box
+      // (local Docker) or two different ones (Render).
       const response = await fetch(`${PRATIBHA_AGENT_URL}/parse-exports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          activities_path: toContainerPath(files.activities_file[0].path),
-          sourcewise_path: toContainerPath(files.sourcewise_file[0].path),
-          active_path:     toContainerPath(files.active_file[0].path),
+          activities_filename: files.activities_file[0].originalname,
+          activities_content:  readFileSync(files.activities_file[0].path, "utf8"),
+          sourcewise_filename: files.sourcewise_file[0].originalname,
+          sourcewise_content:  readFileSync(files.sourcewise_file[0].path, "utf8"),
+          active_filename:     files.active_file[0].originalname,
+          active_content:      readFileSync(files.active_file[0].path, "utf8"),
         }),
       });
 
